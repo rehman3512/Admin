@@ -60,7 +60,7 @@ class SigninView extends StatelessWidget {
                             onPressed: () {
                               authController.ForgotPassword();
                             },
-                            child: authController.isLoading.value
+                            child: authController.isForgot.value
                                 ? IsLoading()
                                 : TextWidget.h3(
                                     "Forgot Password?",

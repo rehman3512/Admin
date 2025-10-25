@@ -1,4 +1,5 @@
 import 'package:admin/Controllers/AdminController/admincontroller.dart';
+import 'package:admin/Widgets/ForgotDialog/forgotDialog.dart';
 import 'package:admin/Widgets/ShowDialog/showdialog.dart';
 import 'package:admin/Widgets/ShowMessage/showmessage.dart';
 import 'package:admin/routes/approutes.dart';
@@ -6,10 +7,19 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
+import 'dart:async';
+
 
 class AuthController extends GetxController {
   var isLoading = false.obs;
+  var isForgot = false.obs;
   var isLogin = false.obs;
+
+  var resendSeconds = 30.obs;
+  var canResend = false.obs;
+  Timer? timer;
+
+
 
   TextEditingController userController = TextEditingController();
   TextEditingController emailController = TextEditingController();
@@ -136,17 +146,66 @@ class AuthController extends GetxController {
   }
 
 
-  ForgotPassword()async{
-    try{
-      isLoading.value = true;
-      await FirebaseAuth.instance.sendPasswordResetEmail(email: emailController.text);
-      ShowDialog.successDialog("Check Your email");
-    }catch(e){
+  // ForgotPassword()async{
+  //   try{
+  //     isForgot.value = true;
+  //     await FirebaseAuth.instance.sendPasswordResetEmail(email: emailController.text);
+  //     ShowDialog.successDialog("Check Your email");
+  //   }catch(e){
+  //     ShowMessage.errorMessage("Error: ${e.toString()}");
+  //   }
+  //   finally{
+  //     isForgot.value = false;
+  //   }
+  // }
+
+
+  ForgotPassword() async {
+    try {
+      isForgot.value = true;
+
+      await FirebaseAuth.instance
+          .sendPasswordResetEmail(email: emailController.text.trim());
+
+      startResendTimer(); // Start timer when email is sent
+
+      Get.dialog(
+        ForgotPasswordDialog(),
+        barrierDismissible: false,
+      );
+    } catch (e) {
+      ShowMessage.errorMessage("Error: ${e.toString()}");
+    } finally {
+      isForgot.value = false;
+    }
+  }
+
+
+  resendPasswordEmail() async {
+    try {
+      await FirebaseAuth.instance
+          .sendPasswordResetEmail(email: emailController.text.trim());
+      ShowMessage.successMessage("Password reset email resent successfully!");
+      startResendTimer(); // restart timer
+    } catch (e) {
       ShowMessage.errorMessage("Error: ${e.toString()}");
     }
-    finally{
-      isLoading.value = false;
-    }
+  }
+
+
+  void startResendTimer() {
+    resendSeconds.value = 30;
+    canResend.value = false;
+    timer?.cancel();
+
+    timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (resendSeconds.value > 0) {
+        resendSeconds.value--;
+      } else {
+        canResend.value = true;
+        timer.cancel();
+      }
+    });
   }
 
 
