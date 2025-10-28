@@ -13,7 +13,7 @@ class TextFieldWidget extends StatelessWidget {
   final bool readOnly;
   final TextInputType keyboardType;
 
-  const TextFieldWidget({super.key,required this.label,required this.controller,
+  const TextFieldWidget({super.key,required this.label,required this.controller,this.keyboardType,
   required this.text,this.suffixicon,this.prefixicon,this.obsecure=false,this.readOnly=false});
 
   @override
