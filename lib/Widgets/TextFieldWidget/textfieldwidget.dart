@@ -11,6 +11,7 @@ class TextFieldWidget extends StatelessWidget {
   final Widget? prefixicon;
   final bool obsecure;
   final bool readOnly;
+  final TextInputType keyboardType;
 
   const TextFieldWidget({super.key,required this.label,required this.controller,
   required this.text,this.suffixicon,this.prefixicon,this.obsecure=false,this.readOnly=false});
@@ -25,6 +26,7 @@ class TextFieldWidget extends StatelessWidget {
         SizedBox(height: 4,),
         TextField(
           controller: controller,
+          keyboardType: keyboardType,
           readOnly: readOnly,
           obscureText: obsecure,
           style: GoogleFonts.poppins(
