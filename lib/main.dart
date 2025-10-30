@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: "Admin",
-      initialRoute: AppRoutes.homeScreen,
+      initialRoute: AppRoutes.splashScreen,
       getPages: AppRoutes.routes,
     );
   }
