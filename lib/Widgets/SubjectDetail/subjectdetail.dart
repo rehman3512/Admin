@@ -1,6 +1,7 @@
 import 'package:admin/Constants/AppColors/appcolors.dart';
 import 'package:admin/Controllers/AdminController/admincontroller.dart';
 import 'package:admin/Models/SubjectModel/subjectmodel.dart';
+import 'package:admin/Views/HomeViews/EnrolledStudents/enrolledstudents.dart';
 import 'package:admin/Views/HomeViews/EnrollmentRequests/enrollmentrequests.dart';
 import 'package:admin/Widgets/CustomButton/custombutton.dart';
 import 'package:admin/Widgets/IsLoadind/isloading.dart';
@@ -50,7 +51,8 @@ class SubjectDetail extends StatelessWidget {
         },child: Icon(Icons.ac_unit_outlined),),
         SizedBox(height: 20,),
         FloatingActionButton(onPressed: (){
-          Get.toNamed(AppRoutes.enrolledStudents);
+          // Get.toNamed(AppRoutes.enrolledStudents);
+          Get.to(() => EnrolledStudents(subjectId: subject.id));
         },child: Icon(Icons.read_more),)
       ],),
       body: SafeArea(
