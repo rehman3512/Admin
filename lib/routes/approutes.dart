@@ -20,7 +20,7 @@ class AppRoutes{
   static String subjectForm = "/SubjectForm";
   static String subjectDetail = "/SubjectDetail"; 
   static String enrollmentRequests = "/EnrollmentRequests";
-  static String enrolledStudents = "/EnrolledStudents";
+  // static String enrolledStudents = "/EnrolledStudents";
   static String bottomNavBar = "/BottomNavBar";
   static String profileScreen = "/ProfileView";
   static String addStudents = "/AddStudents";
@@ -34,7 +34,7 @@ class AppRoutes{
     GetPage(name: subjectForm, page: ()=> SubjectForm()),
     GetPage(name: subjectDetail, page: ()=> SubjectDetail()),
     GetPage(name: enrollmentRequests, page: ()=> EnrollmentRequests()),
-    GetPage(name: enrolledStudents, page: ()=> EnrolledStudents()),
+    // GetPage(name: enrolledStudents, page: ()=> EnrolledStudents()),
     GetPage(name: bottomNavBar, page: ()=> BottomNavBar()),
     GetPage(name: profileScreen, page: ()=> ProfileView()),
     GetPage(name: addStudents, page: ()=> AddStudents()),
