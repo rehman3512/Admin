@@ -989,7 +989,7 @@ class AdminController extends GetxController {
             'subjectDocId': subjectDoc.id,
             'subjectId': data['subjectId'] ?? subjectDoc['subjectId'],
             'requestId': reqDoc.id,
-            'userId': data['userId'] ?? reqDoc.id, // ✅ Correct user ID
+            'userId': data['userId'] ?? reqDoc.id,
           });
         }
       }
@@ -1164,7 +1164,7 @@ class AdminController extends GetxController {
         "trackId": trackIdController.text,
         "transactionMethod": transactionController.text,
         "subjectId": subject.id,
-        "status": "Pending", // admin will approve
+        "status": "Pending",
         "feesStatus": "notPaid",
         "enrolledAt": FieldValue.serverTimestamp(),
       });
@@ -1223,13 +1223,11 @@ class AdminController extends GetxController {
       if (doc.exists) {
         final data = doc.data() as Map<String, dynamic>;
 
-        // Controllers me data set kar rahe hain
         authController.userController.text = data["userName"] ?? "";
         authController.emailController.text = data["userEmail"] ?? "";
         ageController.text = (data["userAge"] ?? "").toString();
         genderController.text = data["userGender"] ?? "";
       } else {
-        // 🔥 Profile document nai hai → kam se kam FirebaseAuth ka email show karwao
         authController.emailController.text =
             FirebaseAuth.instance.currentUser?.email ?? "";
       }
@@ -1344,7 +1342,7 @@ class AdminController extends GetxController {
         "trackId": trackIdController.text,
         "transactionMethod": transactionController.text,
         "subjectId": subject.id,
-        "status": "Pending", // Admin will approve/reject
+        "status": "Pending",
         "submittedAt": FieldValue.serverTimestamp(),
       });
 
