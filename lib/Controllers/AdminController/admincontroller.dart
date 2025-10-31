@@ -737,7 +737,6 @@
 
 
 
-
 import 'package:admin/Constants/AppColors/appcolors.dart';
 import 'package:admin/Controllers/AuthController/authcontroller.dart';
 import 'package:admin/Models/EnrollModel/enrollmodel.dart';
@@ -774,7 +773,7 @@ class AdminController extends GetxController {
   var subjectList = <SubjectModel>[].obs;
   var enrollList = <EnrollModel>[].obs;
   var feeRequests = <Map<String, dynamic>>[].obs;
-  var selectedSubject = Rxn<SubjectModel>(); // ✅ Added selected subject
+  var selectedSubject = Rxn<SubjectModel>();
 
   @override
   void onInit() {
@@ -784,7 +783,6 @@ class AdminController extends GetxController {
     });
   }
 
-  // ✅ Select subject method
   void selectSubject(SubjectModel subject) {
     selectedSubject.value = subject;
   }
@@ -820,7 +818,6 @@ class AdminController extends GetxController {
         return;
       }
 
-      // ✅ Step 1: Check duplicate Subject ID
       var idCheck = await FirebaseFirestore.instance
           .collection("subjectForm")
           .where("subjectId", isEqualTo: subjectIdController.text)
@@ -831,7 +828,6 @@ class AdminController extends GetxController {
         return;
       }
 
-      // ✅ Step 2: Check duplicate Subject Name
       var nameCheck = await FirebaseFirestore.instance
           .collection("subjectForm")
           .where("subjectName", isEqualTo: subjectController.text)
@@ -842,7 +838,6 @@ class AdminController extends GetxController {
         return;
       }
 
-      // ✅ Step 3: Add subject if no duplicates
       final docRef = await FirebaseFirestore.instance
           .collection("subjectForm")
           .add({
@@ -967,7 +962,7 @@ class AdminController extends GetxController {
     }
   }
 
-  // ✅ Correct Fee Request Fetching
+  // ✅ CORRECTED: Fee Request Fetching
   Future<void> fetchAllFeeRequests() async {
     try {
       isLoading.value = true;
@@ -989,7 +984,7 @@ class AdminController extends GetxController {
             'subjectDocId': subjectDoc.id,
             'subjectId': data['subjectId'] ?? subjectDoc['subjectId'],
             'requestId': reqDoc.id,
-            'userId': data['userId'] ?? reqDoc.id,
+            'userId': data['userId'] ?? reqDoc.id, // ✅ Correct user ID
           });
         }
       }
@@ -1002,7 +997,7 @@ class AdminController extends GetxController {
     }
   }
 
-  // ✅ Correct Fee Request Approval
+  // ✅ CORRECTED: Fee Request Approval
   Future<void> approveFeeRequest(Map<String, dynamic> data) async {
     try {
       await FirebaseFirestore.instance
@@ -1020,6 +1015,7 @@ class AdminController extends GetxController {
           .update({
         'status': 'Approved',
         'feesStatus': 'Paid',
+        'feesPaidAt': FieldValue.serverTimestamp(), // ✅ Add feesPaidAt
         'approvedAt': FieldValue.serverTimestamp(),
       });
 
@@ -1054,7 +1050,7 @@ class AdminController extends GetxController {
     }
   }
 
-  // ✅ Correct Enrollment Approval
+  // ✅ CORRECTED: Enrollment Approval
   Future<void> approveEnrollment({
     required String subjectId,
     required String userId,
@@ -1068,7 +1064,7 @@ class AdminController extends GetxController {
           .update({
         'status': 'Approved',
         'feesStatus': 'Paid',
-        'acceptedAt': FieldValue.serverTimestamp(),
+        'approvedAt': FieldValue.serverTimestamp(), // ✅ Add approvedAt
       });
 
       Get.snackbar("Approved", "Student enrolled successfully!",
@@ -1079,7 +1075,6 @@ class AdminController extends GetxController {
     }
   }
 
-  // Reject Request
   Future<void> rejectEnrollment({
     required String subjectId,
     required String docId,
@@ -1100,99 +1095,14 @@ class AdminController extends GetxController {
     }
   }
 
-  EnrolledStudents(SubjectModel subject) async {
-    if (authController.userController.text.isEmpty ||
-        fatherNameController.text.isEmpty ||
-        emailController.text.isEmpty ||
-        trackIdController.text.isEmpty ||
-        transactionController.text.isEmpty) {
-      ShowMessage.errorMessage("All fields are required");
-      return;
-    }
 
-    try {
-      isLoading.value = true;
 
-      final userEmail = emailController.text.trim();
-
-      // ✅ Step 1: Check if the subject ID is valid
-      if (subject.id.isEmpty) {
-        ShowMessage.errorMessage("Invalid Subject ID");
-        return;
-      }
-
-      // ✅ Step 2: Check in 'users' collection if this email exists
-      final userQuery = await FirebaseFirestore.instance
-          .collection("users")
-          .where("userEmail", isEqualTo: userEmail)
-          .limit(1)
-          .get();
-
-      if (userQuery.docs.isEmpty) {
-        ShowMessage.errorMessage("No user found with this email in the system");
-        return;
-      }
-
-      final userDoc = userQuery.docs.first;
-      final userId = userDoc.id;
-
-      final enrollRef = FirebaseFirestore.instance
-          .collection("subjectForm")
-          .doc(subject.id)
-          .collection("enrollForm")
-          .doc(userId);
-
-      final enrollSnapshot = await enrollRef.get();
-
-      if (enrollSnapshot.exists) {
-        final status = (enrollSnapshot.data()?['status'] ?? "").toString();
-
-        if (status == "Pending") {
-          ShowMessage.errorMessage("This user already has a pending request");
-          return;
-        } else if (status == "Approved") {
-          ShowMessage.errorMessage("This user is already enrolled");
-          return;
-        }
-      }
-
-      await enrollRef.set({
-        "userId": userId,
-        "userName": authController.userController.text,
-        "userFatherName": fatherNameController.text,
-        "userEmail": userEmail,
-        "trackId": trackIdController.text,
-        "transactionMethod": transactionController.text,
-        "subjectId": subject.id,
-        "status": "Pending",
-        "feesStatus": "notPaid",
-        "enrolledAt": FieldValue.serverTimestamp(),
-      });
-
-      ShowMessage.successMessage(
-          "${authController.userController.text} enrollment request submitted successfully");
-
-      // Clear all fields
-      authController.userController.clear();
-      fatherNameController.clear();
-      emailController.clear();
-      trackIdController.clear();
-      transactionController.clear();
-
-      Get.back();
-    } catch (e) {
-      ShowMessage.errorMessage("Error: ${e.toString()}");
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  clearAllFields() {
-    authController.userController.clear();
-    fatherNameController.clear();
-    trackIdController.clear();
-    transactionController.clear();
-  }
+  // clearAllFields() {
+  //   authController.userController.clear();
+  //   fatherNameController.clear();
+  //   trackIdController.clear();
+  //   transactionController.clear();
+  // }
 
   insertProfile() async {
     try {
@@ -1255,6 +1165,121 @@ class AdminController extends GetxController {
     }
   }
 
+  // ✅ CORRECTED: Add Student Function (EnrolledStudents)
+  EnrolledStudents(SubjectModel subject) async {
+    if (authController.userController.text.isEmpty ||
+        fatherNameController.text.isEmpty ||
+        emailController.text.isEmpty ||
+        trackIdController.text.isEmpty ||
+        transactionController.text.isEmpty) {
+      ShowMessage.errorMessage("All fields are required");
+      return;
+    }
+
+    try {
+      isLoading.value = true;
+
+      final userEmail = emailController.text.trim();
+
+      if (subject.id.isEmpty) {
+        ShowMessage.errorMessage("Invalid Subject ID");
+        return;
+      }
+
+      // ✅ Users collection se check karen
+      final userQuery = await FirebaseFirestore.instance
+          .collection("users")
+          .where("userEmail", isEqualTo: userEmail)
+          .limit(1)
+          .get();
+
+      if (userQuery.docs.isEmpty) {
+        ShowMessage.errorMessage("No user found with this email in the system");
+        return;
+      }
+
+      final userDoc = userQuery.docs.first;
+      final userId = userDoc.id;
+      final userData = userDoc.data();
+
+      // ✅ IMPORTANT: Check if this SPECIFIC USER ID already has enrollment for this SUBJECT
+      final enrollRef = FirebaseFirestore.instance
+          .collection("subjectForm")
+          .doc(subject.id)
+          .collection("enrollForm")
+          .doc(userId); // ✅ User ID ke basis par check karen
+
+      final enrollSnapshot = await enrollRef.get();
+
+      if (enrollSnapshot.exists) {
+        final data = enrollSnapshot.data() as Map<String, dynamic>;
+        final status = (data['status'] ?? "").toString();
+
+        if (status == "Pending") {
+          ShowMessage.errorMessage("This user ID already has a pending request for this subject");
+          return;
+        } else if (status == "Approved") {
+          ShowMessage.errorMessage("This user ID is already enrolled in this subject");
+          return;
+        } else if (status == "Rejected") {
+          // ✅ Agar rejected hai toh update karen
+          await enrollRef.update({
+            "userName": userData["userName"] ?? authController.userController.text,
+            "userFatherName": fatherNameController.text,
+            "userEmail": userEmail,
+            "trackId": trackIdController.text,
+            "transactionMethod": transactionController.text,
+            "status": "Pending", // Dobara pending karen
+            "feesStatus": "notPaid",
+            "enrolledAt": FieldValue.serverTimestamp(),
+          });
+
+          ShowMessage.successMessage("Enrollment re-submitted successfully after rejection");
+          clearAllFields();
+          Get.back();
+          return;
+        }
+      }
+
+      // ✅ Agar koi existing enrollment nahi hai toh naya create karen
+      await enrollRef.set({
+        "userId": userId,
+        "userName": userData["userName"] ?? authController.userController.text,
+        "userFatherName": fatherNameController.text,
+        "userEmail": userEmail,
+        "trackId": trackIdController.text,
+        "transactionMethod": transactionController.text,
+        "subjectId": subject.id,
+        "status": "Pending",
+        "feesStatus": "notPaid",
+        "enrolledAt": FieldValue.serverTimestamp(),
+      });
+
+      ShowMessage.successMessage(
+          "${userData["userName"] ?? authController.userController.text} enrollment request submitted successfully");
+
+      // Clear all fields
+      clearAllFields();
+
+      Get.back();
+    } catch (e) {
+      ShowMessage.errorMessage("Error: ${e.toString()}");
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+// ✅ Clear all fields method
+  void clearAllFields() {
+    authController.userController.clear();
+    fatherNameController.clear();
+    emailController.clear();
+    trackIdController.clear();
+    transactionController.clear();
+    accountHolderController.clear();
+  }
+
+// ✅ CORRECTED: Submit Fee Function
   Future<void> SubmitFee(SubjectModel subject) async {
     if (authController.userController.text.isEmpty ||
         fatherNameController.text.isEmpty ||
@@ -1271,13 +1296,12 @@ class AdminController extends GetxController {
 
       final userEmail = emailController.text.trim();
 
-      // ✅ Step 1: Check if subjectId is valid
       if (subject.id.isEmpty) {
         ShowMessage.errorMessage("Invalid Subject ID");
         return;
       }
 
-      // ✅ Step 2: Check if user exists in "users" collection
+      // ✅ Users collection se check karen
       final userQuery = await FirebaseFirestore.instance
           .collection("users")
           .where("userEmail", isEqualTo: userEmail)
@@ -1291,6 +1315,7 @@ class AdminController extends GetxController {
 
       final userDoc = userQuery.docs.first;
       final userId = userDoc.id;
+      final userData = userDoc.data();
 
       // ✅ Step 3: Check if user is enrolled (status = Approved)
       final enrollRef = FirebaseFirestore.instance
@@ -1335,7 +1360,7 @@ class AdminController extends GetxController {
       // ✅ Step 5: Submit new fee request
       await feeRef.set({
         "userId": userId,
-        "userName": authController.userController.text,
+        "userName": userData["userName"] ?? authController.userController.text, // ✅ Users collection se name
         "userFatherName": fatherNameController.text,
         "userEmail": userEmail,
         "accountHolder": accountHolderController.text,
