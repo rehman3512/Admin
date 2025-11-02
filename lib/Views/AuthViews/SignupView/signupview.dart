@@ -51,13 +51,23 @@ class SignupView extends StatelessWidget {
                         text: "Enter you email",
                       ),
                       SizedBox(height: 15),
-                      CustomTextField(
+                      Obx(() => CustomTextField(
                         label: "Password",
                         controller: authController.passwordController,
                         text: "Enter your password",
-                        obsecure: true,
-                        suffixicon: Icon(Icons.visibility_off_outlined),
-                      ),
+                        obsecure: authController.isPasswordHidden.value,
+                        suffixicon: IconButton(
+                          icon: Icon(
+                            authController.isPasswordHidden.value
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                          ),
+                          onPressed: () {
+                            authController.isPasswordHidden.value =
+                            !authController.isPasswordHidden.value;
+                          },
+                        ),
+                      )),
                       SizedBox(height: 55),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
@@ -69,10 +79,10 @@ class SignupView extends StatelessWidget {
                             child: authController.isLoading.value
                                 ? Center(child: IsLoading())
                                 : CustomButton(
-                                    text: "Signup",
-                                    textcolor: AppColors.whiteColor,
-                                    color: AppColors.purpleColor,
-                                  ),
+                              text: "Signup",
+                              textcolor: AppColors.whiteColor,
+                              color: AppColors.purpleColor,
+                            ),
                           ),
                         ],
                       ),
