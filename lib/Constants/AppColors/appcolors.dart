@@ -56,12 +56,20 @@ class AppColors{
   static final Color glow = const Color(0xFFD05CE3);            // Neon glow
   static final Color shadow = const Color(0x33800080);          // Soft shadow
   static final Color divider = const Color(0xFFE0D4FF);         // Divider
+  static final Color bgColor = const Color(0xFFF3E8FF);
 
 
   // ADD THESE 7 LINES IN AppColors class
   static final Color splashBg = const Color(0xFFFDFAFF);
   static final Color bubble1 = const Color(0x33800080);         // Bubble purple
   static final Color bubble2 = const Color(0x33E1BEE7);
+
+  // ADD THESE 8 LINES
+  static final Color neonGreen = const Color(0xFF00E676);
+  static final Color neonRed = const Color(0xFFFF1744);
+  static final Color pendingBg = const Color(0x33FFB300);
+  static final Color approvedBg = const Color(0x3300E676);
+  static final Color rejectedBg = const Color(0x33FF1744);
 
 
 }
