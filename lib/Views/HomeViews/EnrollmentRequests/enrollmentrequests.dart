@@ -1,147 +1,3 @@
-import 'package:admin/Constants/AppColors/appcolors.dart';
-import 'package:admin/Controllers/AdminController/admincontroller.dart';
-import 'package:admin/Controllers/AuthController/authcontroller.dart';
-import 'package:admin/Models/SubjectModel/subjectmodel.dart';
-import 'package:admin/Widgets/IsLoadind/isloading.dart';
-import 'package:admin/Widgets/TextWidget/textwidget.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-
-class EnrollmentRequests extends StatelessWidget {
-  final SubjectModel subject;
-  EnrollmentRequests({super.key,}) : subject = Get.arguments;
-
-  final authController = Get.find<AuthController>();
-  final adminController = Get.find<AdminController>();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppColors.purpleColor,
-        leading: IconButton(
-          onPressed: () {
-            Get.back();
-          },
-          icon: Icon(
-            Icons.arrow_back_ios_new_outlined,
-            color: AppColors.whiteColor,
-          ),
-        ),
-        title: TextWidget.h2(
-          "Enrollment Requests",
-          AppColors.whiteColor,
-          context,
-        ),
-      ),
-      backgroundColor: AppColors.whiteColor,
-      body: SafeArea(
-        child: StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection("subjectForm")
-              .doc(subject.id) // 👈 subject id from controller
-              .collection("enrollForm")
-              .where("status", isEqualTo: "Pending") // only pending requests
-              .snapshots(),
-          builder: (context, snapshot) {
-            if (!snapshot.hasData) {
-              return IsLoading();
-            }
-
-            final enrollDocs = snapshot.data!.docs;
-
-            if (enrollDocs.isEmpty) {
-              return Center(
-                child: TextWidget.h2(
-                  "No requests",
-                  AppColors.blackColor,
-                  context,
-                ),
-              );
-            }
-
-            return ListView.builder(
-              padding: EdgeInsets.all(10),
-              itemCount: enrollDocs.length,
-              itemBuilder: (context, index) {
-                final doc = enrollDocs[index];
-                final data = doc.data() as Map<String, dynamic>;
-
-                return Card(
-                  child: ListTile(
-                    title: TextWidget.h3(
-                      data["userName"] ?? "Unknown",
-                      AppColors.blackColor,
-                      context,
-                    ),
-                    subtitle: TextWidget.h3(
-                      "Status: ${data["status"]}",
-                      AppColors.blackColor,
-                      context,
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.check, color: Colors.green),
-                          onPressed: () {
-                            // ✅ Approve request
-                            FirebaseFirestore.instance
-                                .collection("subjectForm")
-                                .doc(subject.id)
-                                .collection("enrollForm")
-                                .doc(doc.id) // 👈 same id as enrollment doc
-                                .update({
-                              'status': 'Approved',
-                              'feesStatus': 'Paid',
-                              'acceptedAt': FieldValue.serverTimestamp(),
-                            }).then((_) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text("Request Approved"),
-                                  backgroundColor: Colors.green,
-                                ),
-                              );
-                            });
-                          },
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.close, color: Colors.red),
-                          onPressed: () {
-                            // ❌ Reject request
-                            FirebaseFirestore.instance
-                                .collection("subjectForm")
-                                .doc(subject.id)
-                                .collection("enrollForm")
-                                .doc(doc.id)
-                                .update({'status': 'Rejected'}).then((_) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text("Request Rejected"),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
-                            });
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-
-
-
-//
 // import 'package:admin/Constants/AppColors/appcolors.dart';
 // import 'package:admin/Controllers/AdminController/admincontroller.dart';
 // import 'package:admin/Models/SubjectModel/subjectmodel.dart';
@@ -149,6 +5,7 @@ class EnrollmentRequests extends StatelessWidget {
 // import 'package:cloud_firestore/cloud_firestore.dart';
 // import 'package:flutter/material.dart';
 // import 'package:get/get.dart';
+// import 'package:intl/intl.dart';
 //
 // class EnrollmentRequests extends StatelessWidget {
 //   final SubjectModel subject = Get.arguments as SubjectModel;
@@ -161,173 +18,24 @@ class EnrollmentRequests extends StatelessWidget {
 //     return Scaffold(
 //       backgroundColor: AppColors.whiteColor,
 //       appBar: AppBar(
-//         backgroundColor: AppColors.purpleColor,
-//         title: TextWidget.h2("Enrollment Requests", Colors.white, context),
-//         leading: IconButton(
-//           onPressed: () => Get.back(),
-//           icon: const Icon(Icons.arrow_back_ios_new_outlined, color: Colors.white),
-//         ),
-//       ),
-//       body: StreamBuilder<QuerySnapshot>(
-//         // ✅ FIXED COLLECTION PATH (student submissions are inside enrollForm under subjectForm)
-//         stream: FirebaseFirestore.instance
-//             .collection("subjectForm")
-//             .doc(subject.id)
-//             .collection("enrollForm")
-//             .snapshots(),
-//         builder: (context, snapshot) {
-//           if (snapshot.connectionState == ConnectionState.waiting) {
-//             return const Center(child: CircularProgressIndicator());
-//           }
-//
-//           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-//             return const Center(child: Text("No Requests Found"));
-//           }
-//
-//           final docs = snapshot.data!.docs;
-//
-//           return ListView.builder(
-//             padding: const EdgeInsets.all(16),
-//             itemCount: docs.length,
-//             itemBuilder: (context, index) {
-//               final data = docs[index].data() as Map<String, dynamic>;
-//               final docId = docs[index].id;
-//
-//               return Card(
-//                 elevation: 3,
-//                 margin: const EdgeInsets.symmetric(vertical: 8),
-//                 shape: RoundedRectangleBorder(
-//                   borderRadius: BorderRadius.circular(12),
-//                 ),
-//                 child: ListTile(
-//                   contentPadding: const EdgeInsets.all(12),
-//                   title: TextWidget.h3(
-//                     data["userName"] ?? "Unknown Student",
-//                     AppColors.blackColor,
-//                     context,
-//                   ),
-//                   subtitle: Column(
-//                     crossAxisAlignment: CrossAxisAlignment.start,
-//                     children: [
-//                       const SizedBox(height: 4),
-//                       Text(
-//                         "Father Name: ${data['userFatherName'] ?? 'N/A'}",
-//                         style: const TextStyle(fontSize: 14),
-//                       ),
-//                       Text(
-//                         "Email: ${data['userEmail'] ?? 'N/A'}",
-//                         style: const TextStyle(fontSize: 14),
-//                       ),
-//                       Text(
-//                         "Track ID: ${data['trackId'] ?? 'N/A'}",
-//                         style: const TextStyle(fontSize: 14),
-//                       ),
-//                       Text(
-//                         "Transaction: ${data['transactionName'] ?? 'N/A'}",
-//                         style: const TextStyle(fontSize: 14),
-//                       ),
-//                       Text(
-//                         "Status: ${data['status'] ?? 'N/A'}",
-//                         style: const TextStyle(fontSize: 14),
-//                       ),
-//                     ],
-//                   ),
-//                   trailing: Row(
-//                     mainAxisSize: MainAxisSize.min,
-//                     children: [
-//                       IconButton(
-//                         icon: const Icon(Icons.check_circle, color: Colors.green),
-//                         onPressed: () => adminController.approveEnrollment(
-//                           subjectId: subject.id,
-//                           userId: docId,
-//                         ),
-//                       ),
-//                       IconButton(
-//                         icon: const Icon(Icons.cancel, color: Colors.red),
-//                         onPressed: () => adminController.rejectEnrollment(
-//                           subjectId: subject.id,
-//                           docId: docId,
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 ),
-//               );
-//             },
-//           );
-//         },
-//       ),
-//     );
-//   }
-// }
-
-//
-// import 'package:admin/Constants/AppColors/appcolors.dart';
-// import 'package:admin/Controllers/AdminController/admincontroller.dart';
-// import 'package:admin/Models/SubjectModel/subjectmodel.dart';
-// import 'package:admin/Widgets/TextWidget/textwidget.dart';
-// import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-//
-// class EnrollmentRequests extends StatelessWidget {
-//   final SubjectModel subject = Get.arguments as SubjectModel;
-//   final AdminController adminController = Get.find<AdminController>();
-//
-//   EnrollmentRequests({super.key});
-//
-//   Future<String> getUserEmail(Map<String, dynamic> data) async {
-//     try {
-//       // 🔹 Check if email is directly available in data (student side)
-//       if (data.containsKey("studentEmail") && data["studentEmail"] != null) {
-//         return data["studentEmail"];
-//       }
-//
-//       // 🔹 If admin created the request, get email from admin collection
-//       if (data.containsKey("adminEmail") && data["adminEmail"] != null) {
-//         return data["adminEmail"];
-//       }
-//
-//       // 🔹 Else fetch from users collection
-//       if (data.containsKey("userId")) {
-//         final userDoc = await FirebaseFirestore.instance
-//             .collection("users")
-//             .doc(data["userId"])
-//             .get();
-//         if (userDoc.exists && userDoc.data()!.containsKey("userEmail")) {
-//           return userDoc["userEmail"];
-//         }
-//       }
-//
-//       return "Email not found";
-//     } catch (e) {
-//       return "Error fetching email";
-//     }
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       backgroundColor: AppColors.whiteColor,
-//       appBar: AppBar(
-//         title: TextWidget.h2("Enrollment Requests", Colors.white, context),
-//         backgroundColor: AppColors.purpleColor,
-//         elevation: 3,
 //         leading: IconButton(
 //           onPressed: () {
 //             Get.back();
 //           },
-//           icon: const Icon(
+//           icon: Icon(
 //             Icons.arrow_back_ios_new_outlined,
-//             color: Colors.white,
+//             color: AppColors.whiteColor,
 //           ),
 //         ),
+//         title: TextWidget.h2("Enrollment Requests", Colors.white, context),
+//         backgroundColor: AppColors.purpleColor,
 //       ),
 //       body: StreamBuilder<QuerySnapshot>(
 //         stream: FirebaseFirestore.instance
 //             .collection("subjectForm")
 //             .doc(subject.id)
 //             .collection("enrollForm")
+//             .orderBy("submittedAt", descending: true)
 //             .snapshots(),
 //         builder: (context, snapshot) {
 //           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -338,7 +46,7 @@ class EnrollmentRequests extends StatelessWidget {
 //             return const Center(
 //               child: Text(
 //                 "No Requests Found",
-//                 style: TextStyle(fontSize: 16, color: Colors.grey),
+//                 style: TextStyle(fontSize: 16),
 //               ),
 //             );
 //           }
@@ -352,79 +60,140 @@ class EnrollmentRequests extends StatelessWidget {
 //               final doc = docs[index];
 //               final data = doc.data() as Map<String, dynamic>;
 //
-//               final studentName = data["userName"] ?? "Unknown";
-//               final fatherName = data["userFatherName"] ?? "Not Provided";
-//               final userId = data["userId"] ?? doc.id;
+//               // Convert Firestore timestamp
+//               String submittedTime = '';
+//               if (data['submittedAt'] != null) {
+//                 final timestamp = data['submittedAt'] as Timestamp;
+//                 submittedTime =
+//                     DateFormat('dd MMM yyyy, hh:mm a').format(timestamp.toDate());
+//               }
 //
-//               return FutureBuilder<String>(
-//                 future: getUserEmail({...data, "userId": userId}),
-//                 builder: (context, emailSnapshot) {
-//                   final email =
-//                       emailSnapshot.data ?? "Fetching email...";
-//
-//                   return Container(
-//                     margin: const EdgeInsets.only(bottom: 16),
-//                     decoration: BoxDecoration(
-//                       color: Colors.white,
-//                       borderRadius: BorderRadius.circular(16),
-//                       boxShadow: [
-//                         BoxShadow(
-//                           color: Colors.grey.withOpacity(0.15),
-//                           blurRadius: 8,
-//                           offset: const Offset(0, 4),
-//                         ),
-//                       ],
-//                     ),
-//                     child: ListTile(
-//                       contentPadding: const EdgeInsets.symmetric(
-//                           horizontal: 16, vertical: 12),
-//                       title: Text(
-//                         studentName,
-//                         style: const TextStyle(
-//                           fontSize: 18,
-//                           fontWeight: FontWeight.w600,
-//                         ),
-//                       ),
-//                       subtitle: Padding(
-//                         padding: const EdgeInsets.only(top: 6),
-//                         child: Column(
-//                           crossAxisAlignment: CrossAxisAlignment.start,
-//                           children: [
-//                             Text("Father Name: $fatherName",
-//                                 style:
-//                                 const TextStyle(color: Colors.black87)),
-//                             Text("Email: $email",
-//                                 style:
-//                                 const TextStyle(color: Colors.black54)),
-//                           ],
-//                         ),
-//                       ),
-//                       trailing: Row(
-//                         mainAxisSize: MainAxisSize.min,
+//               return Card(
+//                 shape: RoundedRectangleBorder(
+//                   borderRadius: BorderRadius.circular(16),
+//                 ),
+//                 elevation: 3,
+//                 margin: const EdgeInsets.only(bottom: 14),
+//                 child: Padding(
+//                   padding: const EdgeInsets.all(16),
+//                   child: Column(
+//                     crossAxisAlignment: CrossAxisAlignment.start,
+//                     children: [
+//                       // Name
+//                       Row(
+//                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
 //                         children: [
-//                           IconButton(
-//                             onPressed: () => adminController.approveEnrollment(
-//                               subjectId: subject.id,
-//                               userId: userId,
+//                           Text(
+//                             data["userName"] ?? "Unknown",
+//                             style: TextStyle(
+//                               fontSize: 18,
+//                               fontWeight: FontWeight.w600,
+//                               color: AppColors.purpleColor,
 //                             ),
-//                             icon: const Icon(Icons.check_circle,
-//                                 color: Colors.green),
-//                             tooltip: "Approve",
 //                           ),
-//                           IconButton(
-//                             onPressed: () => adminController.rejectEnrollment(
-//                               subjectId: subject.id,
-//                               docId: userId,
+//                           Container(
+//                             padding: const EdgeInsets.symmetric(
+//                                 horizontal: 10, vertical: 4),
+//                             decoration: BoxDecoration(
+//                               color: (data["status"] == "Pending")
+//                                   ? Colors.orange.shade100
+//                                   : (data["status"] == "Approved")
+//                                   ? Colors.green.shade100
+//                                   : Colors.red.shade100,
+//                               borderRadius: BorderRadius.circular(10),
 //                             ),
-//                             icon:
-//                             const Icon(Icons.cancel, color: Colors.red),
-//                             tooltip: "Reject",
+//                             child: Text(
+//                               data["status"] ?? "Unknown",
+//                               style: TextStyle(
+//                                 color: (data["status"] == "Pending")
+//                                     ? Colors.orange
+//                                     : (data["status"] == "Approved")
+//                                     ? Colors.green
+//                                     : Colors.red,
+//                                 fontWeight: FontWeight.w600,
+//                               ),
+//                             ),
 //                           ),
 //                         ],
 //                       ),
-//                     ),
-//                   );
-//                 },
+//                       const SizedBox(height: 8),
+//
+//                       // Email
+//                       if (data["userEmail"] != null)
+//                         Text(
+//                           "Email: ${data["userEmail"]}",
+//                           style: const TextStyle(fontSize: 14),
+//                         ),
+//
+//                       const SizedBox(height: 6),
+//
+//                       // Father Name
+//                       if (data["userFatherName"] != null)
+//                         Text(
+//                           "Father Name: ${data["userFatherName"]}",
+//                           style: const TextStyle(fontSize: 14),
+//                         ),
+//
+//                       // Track ID
+//                       if (data["trackId"] != null)
+//                         Text(
+//                           "Track ID: ${data["trackId"]}",
+//                           style: const TextStyle(fontSize: 14),
+//                         ),
+//
+//                       // Transaction Method
+//                       if (data["transactionName"] != null)
+//                         Text(
+//                           "Transaction Method: ${data["transactionName"]}",
+//                           style: const TextStyle(fontSize: 14),
+//                         ),
+//
+//                       const SizedBox(height: 6),
+//
+//                       // Submitted Time
+//                       if (submittedTime.isNotEmpty)
+//                         Text(
+//                           "Submitted At: $submittedTime",
+//                           style: const TextStyle(
+//                             fontSize: 13,
+//                             color: Colors.grey,
+//                           ),
+//                         ),
+//
+//                       const SizedBox(height: 14),
+//                       Row(
+//                         mainAxisAlignment: MainAxisAlignment.end,
+//                         children: [
+//                           ElevatedButton(
+//                             style: ElevatedButton.styleFrom(
+//                               backgroundColor: Colors.green,
+//                             ),
+//                             onPressed: () {
+//                               adminController.approveEnrollment(
+//                                 subjectId: subject.id,
+//                                 userId: doc.id,
+//                               );
+//                             },
+//                             child: const Text("Approve"),
+//                           ),
+//                           const SizedBox(width: 10),
+//                           ElevatedButton(
+//                             style: ElevatedButton.styleFrom(
+//                               backgroundColor: Colors.red,
+//                             ),
+//                             onPressed: () {
+//                               adminController.rejectEnrollment(
+//                                 subjectId: subject.id,
+//                                 docId: doc.id,
+//                               );
+//                             },
+//                             child: const Text("Reject"),
+//                           ),
+//                         ],
+//                       ),
+//                     ],
+//                   ),
+//                 ),
 //               );
 //             },
 //           );
@@ -433,3 +202,359 @@ class EnrollmentRequests extends StatelessWidget {
 //     );
 //   }
 // }
+//
+//
+
+
+
+import 'dart:ui';
+import 'package:admin/Constants/AppColors/appcolors.dart';
+import 'package:admin/Controllers/AdminController/admincontroller.dart';
+import 'package:admin/Models/SubjectModel/subjectmodel.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+
+class EnrollmentRequests extends StatelessWidget {
+  final SubjectModel subject = Get.arguments as SubjectModel;
+  final AdminController adminController = Get.find<AdminController>();
+
+  EnrollmentRequests({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.whiteColor,
+      appBar: _buildAppBar(),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection("subjectForm")
+            .doc(subject.id)
+            .collection("enrollForm")
+            .orderBy("submittedAt", descending: true)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return _buildShimmer();
+          }
+
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return _buildEmptyState();
+          }
+
+          final docs = snapshot.data!.docs;
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(14),
+            itemCount: docs.length,
+            itemBuilder: (context, index) {
+              final doc = docs[index];
+              final data = doc.data() as Map<String, dynamic>;
+              return _buildFixedHeightCard(data, doc.id, index);
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  // Premium AppBar
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      leading: IconButton(
+        onPressed: () => Get.back(),
+        icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.whiteColor),
+      ),
+      title: Text(
+        "Enrollment Requests",
+        style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.whiteColor),
+      ),
+      centerTitle: true,
+      flexibleSpace: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.purpleColor, AppColors.purpleColor.withOpacity(0.9)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+          borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
+        ),
+      ),
+    );
+  }
+
+  // Shimmer
+  Widget _buildShimmer() {
+    return ListView.builder(
+      padding: const EdgeInsets.all(14),
+      itemCount: 3,
+      itemBuilder: (_, __) => Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        height: 160,
+        decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(20)),
+      ),
+    );
+  }
+
+  // Empty State
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.grey[100],
+            ),
+            child: Icon(Icons.hourglass_empty_rounded, size: 60, color: Colors.grey[400]),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            "No Requests Yet",
+            style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.grey[700]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // FIXED HEIGHT CARD (160px)
+  Widget _buildFixedHeightCard(Map<String, dynamic> data, String docId, int index) {
+    final status = data["status"] ?? "Pending";
+    final submittedTime = _formatTimestamp(data['submittedAt']);
+
+    return TweenAnimationBuilder(
+      duration: Duration(milliseconds: 500 + (index * 80)),
+      tween: Tween<double>(begin: 0.0, end: 1.0),
+      curve: Curves.easeOutQuart,
+      builder: (context, value, child) {
+        return Transform.translate(
+          offset: Offset(0, 40 * (1 - value)),
+          child: Opacity(opacity: value, child: child),
+        );
+      },
+      child: Container(
+        height: 160, // ← FIXED HEIGHT
+        margin: const EdgeInsets.only(bottom: 14),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(22),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.glassBg,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: AppColors.whiteColor.withOpacity(0.35), width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.purpleColor.withOpacity(0.15),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          data["userName"] ?? "Unknown",
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.purpleColor,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      _buildStatusBadge(status),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Grid Info (2 columns)
+                  Expanded(
+                    child: Row(
+                      children: [
+                        // Left Column
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              _labelValue("Email", data["userEmail"]),
+                              _labelValue("Father", data["userFatherName"]),
+                            ],
+                          ),
+                        ),
+                        // Right Column
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              _labelValue("Track ID", data["trackId"]),
+                              _labelValue("Method", data["transactionName"]),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // Footer: Time + Buttons
+                  // Row(
+                  //   children: [
+                  //     Text(
+                  //       submittedTime,
+                  //       style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey[600]),
+                  //     ),
+                  //     const Spacer(),
+                  //     _actionButton("Approve", AppColors.neonGreen, () {
+                  //       adminController.approveEnrollment(subjectId: subject.id, userId: docId);
+                  //     }),
+                  //     const SizedBox(width: 8),
+                  //     _actionButton("Reject", AppColors.neonRed, () {
+                  //       adminController.rejectEnrollment(subjectId: subject.id, docId: docId);
+                  //     }),
+                  //   ],
+                  // ),
+
+                  Row(
+                    children: [
+                      Text(
+                        submittedTime,
+                        style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey[600]),
+                      ),
+                      const Spacer(),
+
+                      if (status == "Pending") ...[
+                        _actionButton("Approve", AppColors.neonGreen, () async {
+                          await FirebaseFirestore.instance
+                              .collection("subjectForm")
+                              .doc(subject.id)
+                              .collection("enrollForm")
+                              .doc(docId)
+                              .update({"status": "Approved"});
+                        }),
+                        const SizedBox(width: 8),
+                        _actionButton("Reject", AppColors.neonRed, () async {
+                          await FirebaseFirestore.instance
+                              .collection("subjectForm")
+                              .doc(subject.id)
+                              .collection("enrollForm")
+                              .doc(docId)
+                              .update({"status": "Rejected"});
+                        }),
+                      ] else
+                        Text(
+                          status,
+                          style: GoogleFonts.poppins(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: status == "Approved"
+                                ? AppColors.neonGreen
+                                : AppColors.neonRed,
+                          ),
+                        ),
+                    ],
+                  ),
+
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Label + Value
+  Widget _labelValue(String label, dynamic value) {
+    if (value == null) return const SizedBox();
+    return RichText(
+      text: TextSpan(
+        children: [
+          TextSpan(
+            text: "$label: ",
+            style: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey[700], fontWeight: FontWeight.w500),
+          ),
+          TextSpan(
+            text: value.toString(),
+            style: GoogleFonts.poppins(fontSize: 12.5, color: AppColors.purpleColor, fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+
+  // Status Badge
+  Widget _buildStatusBadge(String status) {
+    Color color;
+    switch (status) {
+      case "Approved":
+        color = AppColors.neonGreen;
+        break;
+      case "Rejected":
+        color = AppColors.neonRed;
+        break;
+      default:
+        color = Colors.orange;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.4)),
+      ),
+      child: Text(
+        status,
+        style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: color),
+      ),
+    );
+  }
+
+  // Action Button
+  Widget _actionButton(String text, Color color, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(colors: [color, color.withOpacity(0.8)]),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [BoxShadow(color: color.withOpacity(0.5), blurRadius: 8, offset: const Offset(0, 3))],
+        ),
+        child: Text(
+          text,
+          style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700, color: Colors.white),
+        ),
+      ),
+    );
+  }
+
+  // Format Time
+  String _formatTimestamp(dynamic timestamp) {
+    if (timestamp == null) return "Unknown";
+    final date = (timestamp as Timestamp).toDate();
+    return DateFormat('dd MMM, hh:mm a').format(date);
+  }
+}
