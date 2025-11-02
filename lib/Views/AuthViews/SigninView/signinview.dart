@@ -45,12 +45,24 @@ class SigninView extends StatelessWidget {
                         text: "Enter your email",
                       ),
                       SizedBox(height: 15),
-                      CustomTextField(
-                        label: "Password",
-                        controller: authController.passwordController,
-                        text: "Enter your password",
-                        obsecure: true,
-                        suffixicon: Icon(Icons.visibility_outlined),
+                      Obx(
+                            () => CustomTextField(
+                          label: "Password",
+                          controller: authController.passwordController,
+                          text: "Enter your password",
+                          obsecure: authController.isPasswordHidden.value,
+                          suffixicon: GestureDetector(
+                            onTap: () {
+                              authController.isPasswordHidden.value = !authController.isPasswordHidden.value;
+                            },
+                            child: Icon(
+                              // show appropriate icon
+                              authController.isPasswordHidden.value
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined
+                            ),
+                          ),
+                        ),
                       ),
                       SizedBox(height: 8),
                       Row(
