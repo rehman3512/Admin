@@ -159,7 +159,7 @@ class ProfileView extends StatelessWidget {
                 const SizedBox(height: 18),
                 _cuteInput(Icons.cake_rounded, "Age", adminController.ageController, "28"),
                 const SizedBox(height: 18),
-                _cuteInput(Icons.transgender_rounded, "Gender", adminController.genderController, "Male"),
+                _cuteInput(Icons.male, "Gender", adminController.genderController, "Male"),
 
                 const SizedBox(height: 40),
 
