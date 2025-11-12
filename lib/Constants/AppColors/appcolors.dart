@@ -1,27 +1,7 @@
 import 'dart:ui';
 
 class AppColors{
-  static Color whiteColor = Color(0xffFFFFFF);
-  static Color blackColor = Color(0xff000000);
-  static Color transparentColor = Color(0x00000000);
-  static Color turquoiseColor = Color(0xff49BBBD);
-  static final Color lightTurquoiseColor = Color(0xFFE0F7F7);
-  static Color redColor = Color(0xffFF0000);
-  static Color purpleColor = Color(0xFF800080);
-  static final Color lightPurpleColor = Color(0xFFD8BFD8);
-  static Color greenColor = Color(0xFF008000);
-  static Color greyColor = Color(0xFFA9A9A9);
-
-
-  static final Color softPurple = const Color(0xFFF3E5F5);     // Card background
-  static final Color purpleAccent = const Color(0xFF9C27B0);   // Timer green
-  static final Color softGreen = const Color(0xFFE8F5E9);      // Paid badge
-  static final Color softRed = const Color(0xFFFFEBEE);       // Not paid badge
-  static final Color timerGreen = const Color(0xFF4CAF50);     // 1-20 days
-  static final Color timerOrange = const Color(0xFFFF9800);    // 21-27 days
-  static final Color timerRed = const Color(0xFFE53935);       // 28-30 days
-  static final Color iconColor = const Color(0xFF6A1B9A);
-
+ 
   static final Color cardBg = const Color(0xFFF8F5FF);        // Soft purple card
   static final Color borderColor = const Color(0xFFE0D4FF);   // Light border
   static final Color titleColor = const Color(0xFF4A148C);    // Deep purple text
