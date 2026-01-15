@@ -147,19 +147,6 @@ class AuthController extends GetxController {
   }
 
 
-  // ForgotPassword()async{
-  //   try{
-  //     isForgot.value = true;
-  //     await FirebaseAuth.instance.sendPasswordResetEmail(email: emailController.text);
-  //     ShowDialog.successDialog("Check Your email");
-  //   }catch(e){
-  //     ShowMessage.errorMessage("Error: ${e.toString()}");
-  //   }
-  //   finally{
-  //     isForgot.value = false;
-  //   }
-  // }
-
 
   ForgotPassword() async {
     try {
