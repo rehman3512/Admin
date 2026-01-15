@@ -913,14 +913,116 @@ class AdminController extends GetxController {
   }
 
   // ✅ 4. Fee form میں subject validation - CORRECTED
+  // SubmitFee(SubjectModel subject) async {
+  //   if (authController.userController.text.isEmpty ||
+  //       fatherNameController.text.isEmpty ||
+  //       emailController.text.isEmpty ||
+  //       accountHolderController.text.isEmpty ||
+  //       trackIdController.text.isEmpty ||
+  //       transactionController.text.isEmpty ||
+  //       subjectIdController.text.isEmpty) {
+  //     ShowMessage.errorMessage("All fields are required");
+  //     return;
+  //   }
+  //
+  //   try {
+  //     isLoading.value = true;
+  //
+  //     final userEmail = emailController.text.trim();
+  //     final enteredSubjectId = subjectIdController.text.trim();
+  //
+  //     // 1️⃣ Check Subject ID exists
+  //     final subjectQuery = await FirebaseFirestore.instance
+  //         .collection("subjectForm")
+  //         .where("subjectId", isEqualTo: enteredSubjectId)
+  //         .limit(1)
+  //         .get();
+  //
+  //     if (subjectQuery.docs.isEmpty) {
+  //       ShowMessage.errorMessage("Invalid Subject ID");
+  //       return;
+  //     }
+  //
+  //     final subjectDoc = subjectQuery.docs.first;
+  //     final subjectDocId = subjectDoc.id;
+  //
+  //     // 2️⃣ Check User exists
+  //     final userQuery = await FirebaseFirestore.instance
+  //         .collection("users")
+  //         .where("userEmail", isEqualTo: userEmail)
+  //         .limit(1)
+  //         .get();
+  //
+  //     if (userQuery.docs.isEmpty) {
+  //       ShowMessage.errorMessage("No user found with this email");
+  //       return;
+  //     }
+  //
+  //     final userDoc = userQuery.docs.first;
+  //     final userId = userDoc.id;
+  //
+  //     // 3️⃣ Check user is enrolled & approved in this subject
+  //     final enrollRef = FirebaseFirestore.instance
+  //         .collection("subjectForm")
+  //         .doc(subjectDocId)
+  //         .collection("enrollForm")
+  //         .doc(userId);
+  //
+  //     final enrollSnap = await enrollRef.get();
+  //
+  //     if (!enrollSnap.exists || enrollSnap.data()!["status"] != "Approved") {
+  //       ShowMessage.errorMessage("User is not approved in this subject");
+  //       return;
+  //     }
+  //
+  //     // 4️⃣ Check duplicate fee request
+  //     final feeRef = FirebaseFirestore.instance
+  //         .collection("subjectForm")
+  //         .doc(subjectDocId)
+  //         .collection("feeRequests")
+  //         .doc(userId);
+  //
+  //     final feeSnap = await feeRef.get();
+  //
+  //     if (feeSnap.exists && feeSnap.data()!["status"] == "Pending") {
+  //       ShowMessage.errorMessage("Fee request already pending for this subject");
+  //       return;
+  //     }
+  //
+  //     // 5️⃣ Submit Fee
+  //     await feeRef.set({
+  //       "userId": userId,
+  //       "userName": userDoc["userName"],
+  //       "userFatherName": fatherNameController.text,
+  //       "userEmail": userEmail,
+  //       "accountHolder": accountHolderController.text,
+  //       "trackId": trackIdController.text,
+  //       "transactionName": transactionController.text,
+  //       "subjectId": enteredSubjectId,
+  //       "status": "Pending",
+  //       "submittedAt": FieldValue.serverTimestamp(),
+  //     });
+  //
+  //     ShowMessage.successMessage("Fee request submitted successfully");
+  //     clearAllFields();
+  //     Get.back();
+  //   } catch (e) {
+  //     ShowMessage.errorMessage("Error: ${e.toString()}");
+  //   } finally {
+  //     isLoading.value = false;
+  //   }
+  // }
+
+
   SubmitFee(SubjectModel subject) async {
     if (authController.userController.text.isEmpty ||
         fatherNameController.text.isEmpty ||
         emailController.text.isEmpty ||
         accountHolderController.text.isEmpty ||
         trackIdController.text.isEmpty ||
-        transactionController.text.isEmpty) {
-      ShowMessage.errorMessage("❌ All fields are required");
+        transactionController.text.isEmpty ||
+        subjectIdController.text.isEmpty) {
+      ShowMessage.errorMessage("All fields are required");
       return;
     }
 
@@ -928,25 +1030,24 @@ class AdminController extends GetxController {
       isLoading.value = true;
 
       final userEmail = emailController.text.trim();
+      final enteredSubjectId = subjectIdController.text.trim();
 
-      // 1. پہلے subject کی validation
-      if (subject.id.isEmpty) {
-        ShowMessage.errorMessage("❌ Invalid Subject ID");
-        return;
-      }
-
-      // 2. Check if subject exists in Firestore
-      final subjectDoc = await FirebaseFirestore.instance
+      // 1️⃣ Check Subject ID exists (numeric one)
+      final subjectQuery = await FirebaseFirestore.instance
           .collection("subjectForm")
-          .doc(subject.id)
+          .where("subjectId", isEqualTo: enteredSubjectId)
+          .limit(1)
           .get();
 
-      if (!subjectDoc.exists) {
-        ShowMessage.errorMessage("❌ Subject does not exist in database");
+      if (subjectQuery.docs.isEmpty) {
+        ShowMessage.errorMessage("Invalid Subject ID");
         return;
       }
 
-      // 3. Check user exists
+      final subjectDoc = subjectQuery.docs.first;
+      final subjectDocId = subjectDoc.id;
+
+      // 2️⃣ Check User
       final userQuery = await FirebaseFirestore.instance
           .collection("users")
           .where("userEmail", isEqualTo: userEmail)
@@ -954,99 +1055,60 @@ class AdminController extends GetxController {
           .get();
 
       if (userQuery.docs.isEmpty) {
-        ShowMessage.errorMessage("❌ No user found with this email");
+        ShowMessage.errorMessage("No user found with this email");
         return;
       }
 
       final userDoc = userQuery.docs.first;
       final userId = userDoc.id;
-      final userData = userDoc.data();
 
-      // 4. Check if user is enrolled in this subject
-      final enrollCheck = await FirebaseFirestore.instance
+      // 3️⃣ Check Enrollment Approved
+      final enrollRef = FirebaseFirestore.instance
           .collection("subjectForm")
-          .doc(subject.id)
+          .doc(subjectDocId)
           .collection("enrollForm")
-          .doc(userId)
-          .get();
+          .doc(userId);
 
-      if (!enrollCheck.exists) {
-        ShowMessage.errorMessage("❌ User is not enrolled in this subject");
+      final enrollSnap = await enrollRef.get();
+
+      if (!enrollSnap.exists || enrollSnap.data()!["status"] != "Approved") {
+        ShowMessage.errorMessage("User is not approved in this subject");
         return;
       }
 
-      // 5. Check enrollment fees status
-      final enrollData = enrollCheck.data() as Map<String, dynamic>;
-      final feesStatus = enrollData["feesStatus"] ?? "notPaid";
-
-      if (feesStatus == "Paid") {
-        ShowMessage.errorMessage("✅ Fees already paid for this subject");
-        return;
-      }
-
-      // 6. Check for existing fee request
+      // 4️⃣ Duplicate fee check
       final feeRef = FirebaseFirestore.instance
           .collection("subjectForm")
-          .doc(subject.id)
+          .doc(subjectDocId)
           .collection("feeRequests")
           .doc(userId);
 
-      final feeSnapshot = await feeRef.get();
+      final feeSnap = await feeRef.get();
 
-      if (feeSnapshot.exists) {
-        final data = feeSnapshot.data() as Map<String, dynamic>;
-        final status = (data['status'] ?? "").toString();
-
-        if (status == "Pending") {
-          ShowMessage.errorMessage("❌ Fee request already pending");
-          return;
-        } else if (status == "Paid" || status == "Approved") {
-          ShowMessage.errorMessage("✅ Fee already approved/paid");
-          return;
-        } else if (status == "Rejected") {
-          // اگر request rejected ہے تو نئی request بھیج سکتے ہیں
-          await feeRef.set({
-            "userName": userData["userName"] ?? authController.userController.text,
-            "userFatherName": fatherNameController.text,
-            "userEmail": userEmail,
-            "accountHolder": accountHolderController.text,
-            "trackId": trackIdController.text,
-            "transactionName": transactionController.text,
-            "subjectId": subject.subjectId,
-            "status": "Pending",
-            "submittedAt": FieldValue.serverTimestamp(),
-            "userId": userId,
-            "subjectDocId": subject.id,
-            "previousStatus": "Rejected",
-          });
-
-          ShowMessage.successMessage("✅ Fee request re-submitted successfully");
-          clearAllFields();
-          Get.back();
-          return;
-        }
+      if (feeSnap.exists && feeSnap.data()!["status"] == "Pending") {
+        ShowMessage.errorMessage("Fee request already pending for this subject");
+        return;
       }
 
-      // 7. New fee request
+      // 5️⃣ Save Fee (Numeric Subject ID only)
       await feeRef.set({
-        "userName": userData["userName"] ?? authController.userController.text,
+        "userId": userId,
+        "userName": userDoc["userName"],
         "userFatherName": fatherNameController.text,
         "userEmail": userEmail,
         "accountHolder": accountHolderController.text,
         "trackId": trackIdController.text,
         "transactionName": transactionController.text,
-        "subjectId": subject.subjectId,
+        "subjectId": enteredSubjectId, // ✅ numeric, jo tum type karte ho
         "status": "Pending",
         "submittedAt": FieldValue.serverTimestamp(),
-        "userId": userId,
-        "subjectDocId": subject.id,
       });
 
-      ShowMessage.successMessage("✅ Fee request submitted successfully");
+      ShowMessage.successMessage("Fee request submitted successfully");
       clearAllFields();
       Get.back();
     } catch (e) {
-      ShowMessage.errorMessage("❌ Error: ${e.toString()}");
+      ShowMessage.errorMessage("Error: ${e.toString()}");
     } finally {
       isLoading.value = false;
     }
@@ -1098,54 +1160,159 @@ class AdminController extends GetxController {
   }
 
   // ✅ 5. Fee requests fetch کرنے کا function
-  fetchAllFeeRequests() async {
+  // Future<void> fetchAllFeeRequests() async {
+  //   try {
+  //     isLoading.value = true;
+  //     feeRequests.clear();
+  //
+  //     final subjectsSnapshot =
+  //     await FirebaseFirestore.instance.collection('subjectForm').get();
+  //
+  //     for (var subjectDoc in subjectsSnapshot.docs) {
+  //       final requestsSnapshot = await subjectDoc.reference
+  //           .collection('feeRequests')
+  //           .orderBy('submittedAt', descending: true)
+  //           .get();
+  //
+  //       for (var reqDoc in requestsSnapshot.docs) {
+  //         final data = reqDoc.data();
+  //
+  //         feeRequests.add({
+  //           "userId": data["userId"],                // 🔴 important
+  //           "userName": data["userName"] ?? "",
+  //           "userFatherName": data["userFatherName"] ?? "",
+  //           "userEmail": data["userEmail"] ?? "",
+  //           "accountHolder": data["accountHolder"] ?? "",
+  //           "trackId": data["trackId"] ?? "",
+  //           "transactionName": data["transactionName"] ?? "",
+  //           "subjectId": subjectDoc.id,
+  //           "status": data["status"] ?? "Pending",
+  //           "submittedAt": data["submittedAt"],
+  //           "requestId": reqDoc.id,
+  //           "subjectDocId": subjectDoc.id,
+  //         });
+  //       }
+  //     }
+  //   } catch (e) {
+  //     ShowMessage.errorMessage("Error fetching fee requests: ${e.toString()}");
+  //   } finally {
+  //     isLoading.value = false;
+  //   }
+  // }
+
+  // ✅ 3. Fee request approve کرنے کا function
+
+
+  Future<void> submitFee(SubjectModel subject) async {
+    if (authController.userController.text.isEmpty ||
+        fatherNameController.text.isEmpty ||
+        accountHolderController.text.isEmpty ||
+        trackIdController.text.isEmpty ||
+        transactionController.text.isEmpty ||
+        subjectIdController.text.isEmpty) {
+      ShowMessage.errorMessage("All fields are required");
+      return;
+    }
+
+    // ✅ Check if entered Subject ID is valid and student is enrolled in THIS subject
+    bool isValidId = subjectList.any((s) => s.subjectId == subjectIdController.text && s.id == subject.id);
+    if (!isValidId) {
+      ShowMessage.errorMessage(
+        "Wrong Subject ID or you are not enrolled in this subject",
+      );
+      return;
+    }
+
+    try {
+      isLoading.value = true;
+
+      // ✅ Each subject has its own fee request document for the user
+      final docRef = FirebaseFirestore.instance
+          .collection("subjectForm")
+          .doc(subject.id)
+          .collection("feeRequests")
+          .doc(getUid());
+
+      final docSnapshot = await docRef.get();
+
+      if (docSnapshot.exists) {
+        final data = docSnapshot.data() as Map<String, dynamic>;
+        final status = data["status"] ?? "";
+        if (status == "Pending") {
+          ShowMessage.errorMessage("Fee request already submitted and pending approval for this subject");
+          return;
+        } else if (status == "Approved") {
+          ShowMessage.errorMessage("Fee already approved for this subject");
+          return;
+        }
+      }
+
+      // ✅ Submit fee request
+      await docRef.set({
+        "userName": authController.userController.text,
+        "userFatherName": fatherNameController.text,
+        "subjectId": subjectIdController.text,
+        "accountHolder": accountHolderController.text,
+        "trackId": trackIdController.text,
+        "transactionName": transactionController.text, // Admin style
+        "status": "Pending",
+        "feesStatus": "notPaid",
+        "submittedAt": FieldValue.serverTimestamp(),
+        "userEmail": FirebaseAuth.instance.currentUser!.email,
+      });
+
+      ShowMessage.successMessage("Fee request submitted successfully");
+
+      // Clear fields
+      fatherNameController.clear();
+      accountHolderController.clear();
+      trackIdController.clear();
+      transactionController.clear();
+      subjectIdController.clear();
+
+      Get.back();
+    } catch (e) {
+      ShowMessage.errorMessage("Failed to submit fee: ${e.toString()}");
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+
+
+  Future<void> fetchAllFeeRequests() async {
     try {
       isLoading.value = true;
       feeRequests.clear();
 
-      var subjectsSnapshot = await FirebaseFirestore.instance
-          .collection('subjectForm')
-          .get();
+      final subjectsSnapshot =
+      await FirebaseFirestore.instance.collection('subjectForm').get();
 
       for (var subjectDoc in subjectsSnapshot.docs) {
-        var requestsSnapshot = await subjectDoc.reference
+        final requestsSnapshot = await subjectDoc.reference
             .collection('feeRequests')
             .orderBy('submittedAt', descending: true)
             .get();
 
         for (var reqDoc in requestsSnapshot.docs) {
-          var data = reqDoc.data();
+          final data = reqDoc.data();
 
-          // صرف pending requests دکھائیں
-          String status = (data["status"] ?? "").toString();
-          if (status == "Pending") {
-            feeRequests.add({
-              "userName": data["userName"] ?? "",
-              "userFatherName": data["userFatherName"] ?? "",
-              "userEmail": data["userEmail"] ?? "",
-              "accountHolder": data["accountHolder"] ?? "",
-              "trackId": data["trackId"] ?? "",
-              "transactionName": data["transactionName"] ?? data["transactionMethod"] ?? "",
-              "subjectId": data["subjectId"] ?? "",
-              "status": status,
-              "submittedAt": data["submittedAt"] ?? FieldValue.serverTimestamp(),
-              "requestId": reqDoc.id,
-              "subjectDocId": subjectDoc.id,
-              "userId": data["userId"] ?? "",
-            });
-          }
+          feeRequests.add({
+            "userId": data["userId"] ?? "",
+            "userName": data["userName"] ?? "",
+            "userFatherName": data["userFatherName"] ?? "",
+            "userEmail": data["userEmail"] ?? "",
+            "accountHolder": data["accountHolder"] ?? "",
+            "trackId": data["trackId"] ?? "",
+            "transactionName": data["transactionName"] ?? "",
+            "subjectId": data["subjectId"] ?? "", // ✅ numeric ID, not doc.id
+            "status": data["status"] ?? "Pending",
+            "submittedAt": data["submittedAt"],
+            "requestId": reqDoc.id,
+            "subjectDocId": subjectDoc.id, // backend use only
+          });
         }
       }
-
-      // Sort by submission date
-      feeRequests.sort((a, b) {
-        Timestamp? aTime = a["submittedAt"] as Timestamp?;
-        Timestamp? bTime = b["submittedAt"] as Timestamp?;
-        if (aTime == null || bTime == null) return 0;
-        return bTime.compareTo(aTime);
-      });
-
-      feeRequests.refresh();
     } catch (e) {
       ShowMessage.errorMessage("Error fetching fee requests: ${e.toString()}");
     } finally {
@@ -1153,93 +1320,66 @@ class AdminController extends GetxController {
     }
   }
 
-  // ✅ 3. Fee request approve کرنے کا function
+
+
   approveFeeRequest(Map<String, dynamic> data) async {
     try {
       isLoading.value = true;
 
-      final userId = data["userId"] ?? "";
-      final subjectDocId = data["subjectDocId"] ?? "";
-      final requestId = data["requestId"] ?? "";
-
-      if (userId.isEmpty || subjectDocId.isEmpty || requestId.isEmpty) {
-        ShowMessage.errorMessage("❌ Invalid request data");
-        return;
-      }
-
-      // 1. Fee request update کریں
+      // 1. Update fee request status
       await FirebaseFirestore.instance
           .collection("subjectForm")
-          .doc(subjectDocId)
+          .doc(data["subjectDocId"])
           .collection("feeRequests")
-          .doc(requestId)
+          .doc(data["requestId"])
           .update({
         "status": "Paid",
         "approvedAt": FieldValue.serverTimestamp(),
       });
 
-      // 2. Enrollment fees status update کریں
+      // 2. Update enrollment feesStatus
       await FirebaseFirestore.instance
           .collection("subjectForm")
-          .doc(subjectDocId)
+          .doc(data["subjectDocId"])
           .collection("enrollForm")
-          .doc(userId)
+          .doc(data["userId"])
           .update({
         "feesStatus": "Paid",
-        "feeApprovedAt": FieldValue.serverTimestamp(),
+        "approvedAt": FieldValue.serverTimestamp(),
       });
 
-      // 3. History save کریں
-      await saveFeeHistory(data, "Approved");
-
-      ShowMessage.successMessage("✅ Fee request approved successfully");
-
-      // 4. List refresh کریں
-      await fetchAllFeeRequests();
+      ShowMessage.successMessage("Fee approved successfully");
     } catch (e) {
-      ShowMessage.errorMessage("❌ Error approving fee request: ${e.toString()}");
+      ShowMessage.errorMessage("Error approving fee: ${e.toString()}");
     } finally {
       isLoading.value = false;
     }
   }
+
 
   // ✅ 3. Fee request reject کرنے کا function
   rejectFeeRequest(Map<String, dynamic> data) async {
     try {
       isLoading.value = true;
 
-      final subjectDocId = data["subjectDocId"] ?? "";
-      final requestId = data["requestId"] ?? "";
-      final userId = data["userId"] ?? "";
-
-      if (subjectDocId.isEmpty || requestId.isEmpty) {
-        ShowMessage.errorMessage("❌ Invalid request data");
-        return;
-      }
-
       await FirebaseFirestore.instance
           .collection("subjectForm")
-          .doc(subjectDocId)
+          .doc(data["subjectDocId"])
           .collection("feeRequests")
-          .doc(requestId)
+          .doc(data["requestId"])
           .update({
         "status": "Rejected",
         "rejectedAt": FieldValue.serverTimestamp(),
       });
 
-      // History save کریں
-      await saveFeeHistory(data, "Rejected");
-
-      ShowMessage.successMessage("❌ Fee request rejected");
-
-      // List refresh کریں
-      await fetchAllFeeRequests();
+      ShowMessage.errorMessage("Fee request rejected");
     } catch (e) {
-      ShowMessage.errorMessage("❌ Error rejecting fee request: ${e.toString()}");
+      ShowMessage.errorMessage("Error rejecting fee: ${e.toString()}");
     } finally {
       isLoading.value = false;
     }
   }
+
 
   // ✅ 6. Fee history save کرنے کا function
   Future<void> saveFeeHistory(Map<String, dynamic> feeData, String action) async {
