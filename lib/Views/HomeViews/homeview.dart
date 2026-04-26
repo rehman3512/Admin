@@ -25,6 +25,7 @@ class HomeView extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
+          adminController.clearControllers();
           Get.toNamed(AppRoutes.subjectForm);
         },
         backgroundColor: AppColors.purpleColor,

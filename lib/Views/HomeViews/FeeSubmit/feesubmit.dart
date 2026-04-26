@@ -28,7 +28,7 @@ class FeeSubmit extends StatelessWidget {
               // 🔹 Directly open FeeRequestsAdmin without argument
               Get.to(() => FeeRequests());
             },
-            child: Icon(Icons.remove, color: AppColors.whiteColor),
+            child: Icon(Icons.how_to_reg, color: AppColors.whiteColor),
             backgroundColor: AppColors.purpleColor,
           ),
           SizedBox(height: 20),

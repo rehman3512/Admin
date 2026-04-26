@@ -75,17 +75,19 @@ class SubjectForm extends StatelessWidget {
                 SizedBox(height: 50),
                 Align(
                   alignment: Alignment.center,
-                  child: GestureDetector(
-                    onTap: () {
-                      adminController.addSubject();
-                    },
-                    child: adminController.isLoading.value
-                        ? Center(child: IsLoading())
-                        : CustomButton(
-                            text: "Save",
-                            textcolor: AppColors.whiteColor,
-                            color: AppColors.purpleColor,
-                          ),
+                  child: Obx(
+                      ()=> GestureDetector(
+                      onTap: () {
+                        adminController.addSubject();
+                      },
+                      child: adminController.isLoading.value
+                          ? Center(child: IsLoading())
+                          : CustomButton(
+                              text: "Save",
+                              textcolor: AppColors.whiteColor,
+                              color: AppColors.purpleColor,
+                            ),
+                    ),
                   ),
                 ),
               ],

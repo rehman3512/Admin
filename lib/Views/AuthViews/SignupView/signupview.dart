@@ -72,16 +72,18 @@ class SignupView extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          GestureDetector(
-                            onTap: (){
-                              authController.signup();
-                            },
-                            child: authController.isLoading.value
-                                ? Center(child: IsLoading())
-                                : CustomButton(
-                              text: "Signup",
-                              textcolor: AppColors.whiteColor,
-                              color: AppColors.purpleColor,
+                          Obx(
+                          ()=> GestureDetector(
+                              onTap: (){
+                                authController.signup();
+                              },
+                              child: authController.isLoading.value
+                                  ? Center(child: IsLoading())
+                                  : CustomButton(
+                                text: "Signup",
+                                textcolor: AppColors.whiteColor,
+                                color: AppColors.purpleColor,
+                              ),
                             ),
                           ),
                         ],

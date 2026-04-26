@@ -106,6 +106,7 @@ class AuthController extends GetxController {
         }
         ShowMessage.successMessage("Your account successfully created");
         clearFields();
+        isLogin.value = true;
         Get.offAndToNamed(AppRoutes.signinScreen);
       }
     } catch (e) {
@@ -115,14 +116,13 @@ class AuthController extends GetxController {
     }
   }
 
-
   signout() async {
     try {
       isLoading.value = true;
       await FirebaseAuth.instance.signOut();
       ShowMessage.successMessage("Your successfully logout");
       clearFields();
-      Get.offAndToNamed(AppRoutes.signupScreen);
+      Get.offAndToNamed(AppRoutes.signinScreen);
     } catch (e) {
       ShowMessage.errorMessage("Error: ${e.toString()}");
     } finally {
@@ -146,8 +146,6 @@ class AuthController extends GetxController {
     passwordController.clear();
   }
 
-
-
   ForgotPassword() async {
     try {
       isForgot.value = true;
@@ -168,7 +166,6 @@ class AuthController extends GetxController {
     }
   }
 
-
   resendPasswordEmail() async {
     try {
       await FirebaseAuth.instance
@@ -179,7 +176,6 @@ class AuthController extends GetxController {
       ShowMessage.errorMessage("Error: ${e.toString()}");
     }
   }
-
 
   void startResendTimer() {
     resendSeconds.value = 30;
@@ -195,6 +191,5 @@ class AuthController extends GetxController {
       }
     });
   }
-
 
 }

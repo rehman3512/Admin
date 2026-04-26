@@ -20,6 +20,7 @@ class AddStudents extends StatelessWidget {
       backgroundColor: AppColors.whiteColor,
       floatingActionButton: FloatingActionButton(onPressed: (){
         if (adminController.subjectList.isNotEmpty) {
+          adminController.clearControllers();
           // Index 0 as example, user select ka logic add kar sakte ho
           Get.to(() => EnrollForm(subject: adminController.subjectList[0],));
         } else {
